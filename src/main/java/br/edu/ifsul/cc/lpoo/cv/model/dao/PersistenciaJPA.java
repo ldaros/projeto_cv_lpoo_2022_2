@@ -40,7 +40,7 @@ public class PersistenciaJPA implements InterfacePersistencia {
     }
 
     @Override
-    public Object find(Class c, Object id) throws Exception {
+    public Object find(Class<?> c, Object id) throws Exception {
 
         return entity.find(c, id);// encontra um determinado registro
     }
@@ -62,20 +62,20 @@ public class PersistenciaJPA implements InterfacePersistencia {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<Produto> listProdutos() throws Exception {
-
         return entity.createNamedQuery("Produto.orderbyid").getResultList();
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<Fornecedor> listFornecedores() throws Exception {
-
         return entity.createNamedQuery("Fornecedor.orderbynome").getResultList();
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public List<Receita> listReceitas() throws Exception {
-
         return entity.createNamedQuery("Receita.orderbyid").getResultList();
     }
 

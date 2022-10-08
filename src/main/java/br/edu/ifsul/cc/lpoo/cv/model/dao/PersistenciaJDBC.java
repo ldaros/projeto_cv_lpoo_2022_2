@@ -62,7 +62,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
     }
 
     @Override
-    public Object find(Class c, Object id) throws Exception {
+    public Object find(Class<?> c, Object id) throws Exception {
 
         throw new UnsupportedOperationException("Not supported yet.");
     }
@@ -410,7 +410,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
 
         ResultSet rs = ps.executeQuery();
 
-        lista = new ArrayList();
+        lista = new ArrayList<Produto>();
 
         while (rs.next()) {
 
@@ -447,7 +447,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
 
         ResultSet rs = ps.executeQuery();
 
-        lista = new ArrayList();
+        lista = new ArrayList<Fornecedor>();
 
         while (rs.next()) {
 
@@ -472,7 +472,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
 
         ResultSet rs = ps.executeQuery();
 
-        lista = new ArrayList();
+        lista = new ArrayList<Receita>();
 
         while (rs.next()) {
 
@@ -528,7 +528,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
 
         ResultSet rs = ps.executeQuery();
 
-        lista = new ArrayList();
+        lista = new ArrayList<Consulta>();
 
         while (rs.next()) {
 
@@ -559,7 +559,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
 
         ResultSet rs = ps.executeQuery();
 
-        lista = new ArrayList();
+        lista = new ArrayList<Medico>();
 
         while (rs.next()) {
 
@@ -584,7 +584,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
 
         ResultSet rs = ps.executeQuery();
 
-        lista = new ArrayList();
+        lista = new ArrayList<Pet>();
 
         while (rs.next()) {
 
@@ -608,7 +608,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
 
         ResultSet rs = ps.executeQuery();
 
-        lista = new ArrayList();
+        lista = new ArrayList<Raca>();
 
         while (rs.next()) {
 
@@ -632,7 +632,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
 
         ResultSet rs = ps.executeQuery();
 
-        lista = new ArrayList();
+        lista = new ArrayList<Especie>();
 
         while (rs.next()) {
 
@@ -656,7 +656,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
 
         ResultSet rs = ps.executeQuery();
 
-        lista = new ArrayList();
+        lista = new ArrayList<Cliente>();
 
         while (rs.next()) {
 

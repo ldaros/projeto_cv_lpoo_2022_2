@@ -18,7 +18,7 @@ public interface InterfacePersistencia {
 
     public void fecharConexao();
 
-    public Object find(Class c, Object id) throws Exception;
+    public Object find(Class<?> c, Object id) throws Exception;
 
     public void persist(Object o) throws Exception;
 

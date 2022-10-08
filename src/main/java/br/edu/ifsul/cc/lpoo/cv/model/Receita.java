@@ -104,7 +104,7 @@ public class Receita implements Serializable {
     public void setProduto(Produto produto) {
 
         if (this.produtos == null)
-            this.produtos = new ArrayList();
+            this.produtos = new ArrayList<Produto>();
         this.produtos.add(produto);
     }
 
