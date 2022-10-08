@@ -8,6 +8,7 @@ import br.edu.ifsul.cc.lpoo.cv.model.TipoProduto;
 import br.edu.ifsul.cc.lpoo.cv.model.dao.PersistenciaJPA;
 import java.util.Calendar;
 import java.util.List;
+
 import org.junit.Test;
 
 public class TestPersistenciaJPA {
@@ -25,23 +26,23 @@ public class TestPersistenciaJPA {
         }
     }
 
-    // @Test
+    @Test
     public void testListProduto() throws Exception {
         // criar um objeto do tipo PersistenciaJPA.
         PersistenciaJPA jpa = new PersistenciaJPA();
-        if (jpa.conexaoAberta()) {
-            List<Produto> lista = jpa.listProdutos();
-            System.out.println("testListProduto : " + lista.size());
-            for (Produto p : lista) {
 
+        List<Produto> lista = jpa.listProdutos();
+
+        if (lista != null) {
+            System.out.println("testListProduto : " + lista.size());
+
+            for (Produto p : lista) {
                 System.out.println("Produto: " + p);
             }
 
-            jpa.fecharConexao();
-        } else {
-            System.out.println("nao conectou no BD ...");
-
         }
+
+        jpa.fecharConexao();
     }
 
     @Test
