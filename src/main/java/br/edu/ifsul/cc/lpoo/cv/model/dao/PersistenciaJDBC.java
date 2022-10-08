@@ -24,7 +24,7 @@ public class PersistenciaJDBC implements InterfacePersistencia {
 
     private final String DRIVER = "org.postgresql.Driver";
     private final String USER = "postgres";
-    private final String SENHA = "123456";
+    private final String SENHA = "postgres";
     public static final String URL = "jdbc:postgresql://localhost:5432/db_cv_2022_2";
     private Connection con = null;
 
@@ -38,332 +38,295 @@ public class PersistenciaJDBC implements InterfacePersistencia {
     }
 
     public Boolean conexaoAberta() {
-
         try {
-            if (con != null)
-                return !con.isClosed();// verifica se a conexao está aberta
+            return !this.con.isClosed();
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            return false;
         }
-        return false;
 
     }
 
     @Override
     public void fecharConexao() {
-
         try {
-            this.con.close();// fecha a conexao.
-            System.out.println("Fechou conexao JDBC");
-        } catch (SQLException e) {
-            e.printStackTrace();// gera uma pilha de erro na saida.
+            this.con.close();
+        } catch (SQLException ex) {
+            System.out.println("Erro ao fechar a conexao JDBC: " + ex.getMessage());
         }
-
     }
 
     @Override
     public Object find(Class<?> c, Object id) throws Exception {
-
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public void persist(Object o) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 
-        if (o instanceof Produto) {
+    public void persist(Produto p) throws Exception {
+        if (p.getId() == null) {
 
-            Produto p = (Produto) o;
-            if (p.getId() == null) {
+            PreparedStatement ps = this.con
+                    .prepareStatement("insert into tb_produto (id, nome, quantidade, tipo, valor, fornecedor_cpf) "
+                            + "values (nextval('seq_produto_id'), ?, ?, ?, ?, ?) returning id;");
+            ps.setString(1, p.getNome());
+            ps.setFloat(2, p.getQuantidade());
+            ps.setString(3, p.getTipo().name());
+            ps.setFloat(4, p.getValor());
+            ps.setString(5, p.getFornecedor().getCpf());
 
-                PreparedStatement ps = this.con
-                        .prepareStatement("insert into tb_produto (id, nome, quantidade, tipo, valor, fornecedor_cpf) "
-                                + "values (nextval('seq_produto_id'), ?, ?, ?, ?, ?) returning id;");
-                ps.setString(1, p.getNome());
-                ps.setFloat(2, p.getQuantidade());
-                ps.setString(3, p.getTipo().name());
-                ps.setFloat(4, p.getValor());
-                ps.setString(5, p.getFornecedor().getCpf());
-
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    p.setId(rs.getInt("id"));
-                }
-
-            } else {
-
-                PreparedStatement ps = this.con.prepareStatement(
-                        "update tb_produto set nome = ?, quantidade = ?, tipo = ?, valor = ?, fornecedor_cpf = ? "
-                                + "where id = ?; ");
-
-                ps.setString(1, p.getNome());
-                ps.setFloat(2, p.getQuantidade());
-                ps.setString(3, p.getTipo().name());
-                ps.setFloat(4, p.getValor());
-                ps.setString(5, p.getFornecedor().getCpf());
-                ps.setInt(6, p.getId());
-
-                ps.execute();
-
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                p.setId(rs.getInt("id"));
             }
 
-        } else if (o instanceof Receita) {
+        } else {
 
-            Receita r = (Receita) o;
-            if (r.getId() == null) {
+            PreparedStatement ps = this.con.prepareStatement(
+                    "update tb_produto set nome = ?, quantidade = ?, tipo = ?, valor = ?, fornecedor_cpf = ? "
+                            + "where id = ?; ");
 
-                PreparedStatement ps = this.con.prepareStatement("insert into tb_receita (id, orientacao, consulta_id) "
-                        + "values (nextval('seq_receita_id'), ?, ?) returning id;");
-                ps.setString(1, r.getOrientacao());
-                ps.setInt(2, r.getConsulta().getId());
+            ps.setString(1, p.getNome());
+            ps.setFloat(2, p.getQuantidade());
+            ps.setString(3, p.getTipo().name());
+            ps.setFloat(4, p.getValor());
+            ps.setString(5, p.getFornecedor().getCpf());
+            ps.setInt(6, p.getId());
 
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    r.setId(rs.getInt("id"));
-                }
+            ps.execute();
+        }
+    }
 
-                if (r.getProdutos() != null && !r.getProdutos().isEmpty()) {
+    public void persist(Receita r) throws Exception {
+        if (r.getId() == null) {
 
-                    for (Produto p : r.getProdutos()) {
+            PreparedStatement ps = this.con.prepareStatement("insert into tb_receita (id, orientacao, consulta_id) "
+                    + "values (nextval('seq_receita_id'), ?, ?) returning id;");
+            ps.setString(1, r.getOrientacao());
+            ps.setInt(2, r.getConsulta().getId());
 
-                        PreparedStatement ps2 = this.con
-                                .prepareStatement("insert into tb_receita_produto (receita_id, produto_id) "
-                                        + "values (?, ?) ");
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                r.setId(rs.getInt("id"));
+            }
 
-                        ps2.setInt(1, r.getId());
-                        ps2.setInt(2, p.getId());
+            if (r.getProdutos() != null && !r.getProdutos().isEmpty()) {
 
-                        ps2.execute();
+                for (Produto p : r.getProdutos()) {
 
-                        ps2.close();
+                    PreparedStatement ps2 = this.con
+                            .prepareStatement("insert into tb_receita_produto (receita_id, produto_id) "
+                                    + "values (?, ?) ");
 
-                    }
+                    ps2.setInt(1, r.getId());
+                    ps2.setInt(2, p.getId());
 
-                }
-                rs.close();
-                ps.close();
+                    ps2.execute();
 
-            } else {
-
-                PreparedStatement ps = this.con
-                        .prepareStatement("update tb_receita set orientacao = ?, consulta_id = ? "
-                                + "where id = ?");
-                ps.setString(1, r.getOrientacao());
-                ps.setInt(2, r.getConsulta().getId());
-                ps.setInt(3, r.getId());
-
-                ps.execute();
-
-                // remove as linhas na tabela associativa.
-                PreparedStatement ps2 = this.con
-                        .prepareStatement("delete from tb_receita_produto where receita_id = ?");
-                ps2.setInt(1, r.getId());
-
-                ps2.execute();
-
-                if (r.getProdutos() != null && !r.getProdutos().isEmpty()) {
-
-                    for (Produto p : r.getProdutos()) {
-
-                        PreparedStatement ps3 = this.con
-                                .prepareStatement("insert into tb_receita_produto (receita_id, produto_id) "
-                                        + "values (?, ?) ");
-
-                        ps3.setInt(1, r.getId());
-                        ps3.setInt(2, p.getId());
-
-                        ps3.execute();
-
-                        ps3.close();
-
-                    }
+                    ps2.close();
 
                 }
 
             }
+            rs.close();
+            ps.close();
 
-        } else if (o instanceof Pet) {
+        } else {
 
-            Pet p = (Pet) o;
-            if (p.getId() == null) {
+            PreparedStatement ps = this.con
+                    .prepareStatement("update tb_receita set orientacao = ?, consulta_id = ? "
+                            + "where id = ?");
+            ps.setString(1, r.getOrientacao());
+            ps.setInt(2, r.getConsulta().getId());
+            ps.setInt(3, r.getId());
 
-                PreparedStatement ps = this.con.prepareStatement(
-                        "insert into tb_pet (id, nome, data_nascimento, observacao, raca_id, cliente_cpf) "
-                                + "values (nextval('seq_pet_id'), ?, ?, ?, ?, ?) returning id;");
-                ps.setString(1, p.getNome());
-                ps.setDate(2, new java.sql.Date(p.getData_nascimento().getTimeInMillis()));
-                ps.setString(3, p.getObservacao());
-                ps.setInt(4, p.getRaca().getId());
-                ps.setString(5, p.getCliente().getCpf());
+            ps.execute();
 
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    p.setId(rs.getInt("id"));
+            // remove as linhas na tabela associativa.
+            PreparedStatement ps2 = this.con
+                    .prepareStatement("delete from tb_receita_produto where receita_id = ?");
+            ps2.setInt(1, r.getId());
+
+            ps2.execute();
+
+            if (r.getProdutos() != null && !r.getProdutos().isEmpty()) {
+
+                for (Produto p : r.getProdutos()) {
+
+                    PreparedStatement ps3 = this.con
+                            .prepareStatement("insert into tb_receita_produto (receita_id, produto_id) "
+                                    + "values (?, ?) ");
+
+                    ps3.setInt(1, r.getId());
+                    ps3.setInt(2, p.getId());
+
+                    ps3.execute();
+
+                    ps3.close();
+
                 }
+            }
+        }
+    }
 
-            } else {
+    public void persist(Pet p) throws Exception {
+        if (p.getId() == null) {
+            PreparedStatement ps = this.con.prepareStatement(
+                    "insert into tb_pet (id, nome, data_nascimento, observacao, raca_id, cliente_cpf) "
+                            + "values (nextval('seq_pet_id'), ?, ?, ?, ?, ?) returning id;");
 
-                PreparedStatement ps = this.con.prepareStatement("update tb_pet set nome = ?, data_nascimento = ? "
-                        + "where id = ?; ");
+            ps.setString(1, p.getNome());
+            ps.setDate(2, new java.sql.Date(p.getData_nascimento().getTimeInMillis()));
+            ps.setString(3, p.getObservacao());
+            ps.setInt(4, p.getRaca().getId());
+            ps.setString(5, p.getCliente().getCpf());
 
-                ps.setString(1, p.getNome());
-                ps.setDate(2, new java.sql.Date(p.getData_nascimento().getTimeInMillis()));
-                ps.setInt(3, p.getId());
-
-                // ..implementar os demais campos...
-                ps.execute();
-
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                p.setId(rs.getInt("id"));
             }
 
-        } else if (o instanceof Raca) {
+        } else {
 
-            Raca r = (Raca) o;
+            PreparedStatement ps = this.con.prepareStatement("update tb_pet set nome = ?, data_nascimento = ? "
+                    + "where id = ?; ");
 
-            if (r.getId() == null) {
+            ps.setString(1, p.getNome());
+            ps.setDate(2, new java.sql.Date(p.getData_nascimento().getTimeInMillis()));
+            ps.setInt(3, p.getId());
 
-                PreparedStatement ps = this.con.prepareStatement("insert into tb_raca (id, nome, especie_id) "
-                        + "values (nextval('seq_raca_id'), ?, ?) returning id;");
-                ps.setString(1, r.getNome());
-                ps.setInt(2, r.getEspecie().getId());
+            // ..implementar os demais campos...
+            ps.execute();
 
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    r.setId(rs.getInt("id"));
-                }
+        }
+    }
 
-            } else {
+    public void persist(Raca r) throws Exception {
+        if (r.getId() == null) {
 
-                // implementar a alteracao ...
+            PreparedStatement ps = this.con.prepareStatement("insert into tb_raca (id, nome, especie_id) "
+                    + "values (nextval('seq_raca_id'), ?, ?) returning id;");
+            ps.setString(1, r.getNome());
+            ps.setInt(2, r.getEspecie().getId());
 
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                r.setId(rs.getInt("id"));
             }
 
-        } else if (o instanceof Especie) {
+        } else {
+            // implementar a alteracao ...
+        }
+    }
 
-            Especie e = (Especie) o;
+    public void persist(Especie e) throws Exception {
+        if (e.getId() == null) {
 
-            if (e.getId() == null) {
+            PreparedStatement ps = this.con.prepareStatement("insert into tb_especie (id, nome) "
+                    + "values (nextval('seq_especie_id'), ?) returning id;");
+            ps.setString(1, e.getNome());
 
-                PreparedStatement ps = this.con.prepareStatement("insert into tb_especie (id, nome) "
-                        + "values (nextval('seq_especie_id'), ?) returning id;");
-                ps.setString(1, e.getNome());
-
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    e.setId(rs.getInt("id"));
-                }
-
-            } else {
-
-                // implementar a alteracao ...
-
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                e.setId(rs.getInt("id"));
             }
 
-        } else if (o instanceof Fornecedor) {
+        } else {
+            // implementar a alteracao ...
+        }
+    }
 
-        } else if (o instanceof Medico) {
+    public void persist(Medico m) throws Exception {
+        if (m.getData_cadastro() == null) {
 
-            Medico m = (Medico) o;
+            PreparedStatement ps = this.con
+                    .prepareStatement("insert into tb_pessoa (tipo, cpf, rg, nome, senha, data_cadastro) "
+                            + "values ('M', ?, ?, ?, ?, ?); ");
+            ps.setString(1, m.getCpf());
+            ps.setString(2, m.getRg());
+            ps.setString(3, m.getNome());
+            ps.setString(4, m.getSenha());
+            ps.setDate(5, new java.sql.Date(Calendar.getInstance().getTimeInMillis()));
 
-            if (m.getData_cadastro() == null) {
+            ps.execute();
+            ps.close();
 
-                PreparedStatement ps = this.con
-                        .prepareStatement("insert into tb_pessoa (tipo, cpf, rg, nome, senha, data_cadastro) "
-                                + "values ('M', ?, ?, ?, ?, ?); ");
-                ps.setString(1, m.getCpf());
-                ps.setString(2, m.getRg());
-                ps.setString(3, m.getNome());
-                ps.setString(4, m.getSenha());
-                ps.setDate(5, new java.sql.Date(Calendar.getInstance().getTimeInMillis()));
+            ps = this.con.prepareStatement("insert into tb_medico (cpf, numero_crmv) "
+                    + "values (?, ?); ");
+            ps.setString(1, m.getCpf());
+            ps.setString(2, m.getNumero_crmv());
 
-                ps.execute();
-                ps.close();
+            ps.execute();
+            ps.close();
 
-                ps = this.con.prepareStatement("insert into tb_medico (cpf, numero_crmv) "
-                        + "values (?, ?); ");
-                ps.setString(1, m.getCpf());
-                ps.setString(2, m.getNumero_crmv());
+            System.out.println("inseriu o medico ...");
 
-                ps.execute();
-                ps.close();
+        } else {
+            // implementar a alteracao ...
+        }
+    }
 
-                System.out.println("inseriu o medico ...");
+    public void persist(Cliente c) throws Exception {
+        if (c.getData_cadastro() == null) {
 
-            } else {
+            PreparedStatement ps = this.con
+                    .prepareStatement("insert into tb_pessoa (tipo, cpf, rg, nome, senha, data_cadastro) "
+                            + "values ('C', ?, ?, ?, ?, ?); ");
+            ps.setString(1, c.getCpf());
+            ps.setString(2, c.getRg());
+            ps.setString(3, c.getNome());
+            ps.setString(4, c.getSenha());
+            ps.setDate(5, new java.sql.Date(Calendar.getInstance().getTimeInMillis()));
 
-                // implementar a alteracao ...
+            ps.execute();
+            ps.close();
 
-            }
+            ps = this.con.prepareStatement("insert into tb_cliente (cpf, data_ultima_visita) "
+                    + "values (?, ?); ");
+            ps.setString(1, c.getCpf());
+            ps.setDate(2, new java.sql.Date(Calendar.getInstance().getTimeInMillis()));
 
-        } else if (o instanceof Cliente) {
+            ps.execute();
+            ps.close();
 
-            Cliente c = (Cliente) o;
+            System.out.println("inseriu o cliente ...");
 
-            if (c.getData_cadastro() == null) {
+        } else {
+            // implementar a alteracao ...
+        }
+    }
 
-                PreparedStatement ps = this.con
-                        .prepareStatement("insert into tb_pessoa (tipo, cpf, rg, nome, senha, data_cadastro) "
-                                + "values ('C', ?, ?, ?, ?, ?); ");
-                ps.setString(1, c.getCpf());
-                ps.setString(2, c.getRg());
-                ps.setString(3, c.getNome());
-                ps.setString(4, c.getSenha());
-                ps.setDate(5, new java.sql.Date(Calendar.getInstance().getTimeInMillis()));
+    public void persist(Consulta c) throws Exception {
+        if (c.getId() == null) {
 
-                ps.execute();
-                ps.close();
+            PreparedStatement ps = this.con.prepareStatement("insert into tb_consulta (id, "
+                    + "data, "
+                    + "data_retorno, "
+                    + "observacao, "
+                    + "valor, "
+                    + "medico_cpf, "
+                    + "pet_id) values "
+                    + "( nextval('seq_consulta_id'), "
+                    + " ?,"
+                    + " ?,"
+                    + " ?,"
+                    + " ?,"
+                    + " ?,"
+                    + " ?) returning id ");
 
-                ps = this.con.prepareStatement("insert into tb_cliente (cpf, data_ultima_visita) "
-                        + "values (?, ?); ");
-                ps.setString(1, c.getCpf());
-                ps.setDate(2, new java.sql.Date(Calendar.getInstance().getTimeInMillis()));
+            ps.setDate(1, new java.sql.Date(c.getData().getTimeInMillis()));
+            ps.setDate(2, new java.sql.Date(c.getData_retorno().getTimeInMillis()));
+            ps.setString(3, c.getObservacao());
+            ps.setFloat(4, c.getValor());
+            ps.setString(5, c.getMedico().getCpf());
+            ps.setInt(6, c.getPet().getId());
 
-                ps.execute();
-                ps.close();
+            ResultSet rs = ps.executeQuery();
 
-                System.out.println("inseriu o cliente ...");
-
-            } else {
-
-                // implementar a alteracao ...
-
-            }
-
-        } else if (o instanceof Procedimento) {
-
-        } else if (o instanceof Consulta) {
-
-            Consulta c = (Consulta) o;
-            if (c.getId() == null) {
-
-                PreparedStatement ps = this.con.prepareStatement("insert into tb_consulta (id, "
-                        + "data, "
-                        + "data_retorno, "
-                        + "observacao, "
-                        + "valor, "
-                        + "medico_cpf, "
-                        + "pet_id) values "
-                        + "( nextval('seq_consulta_id'), "
-                        + " ?,"
-                        + " ?,"
-                        + " ?,"
-                        + " ?,"
-                        + " ?,"
-                        + " ?) returning id ");
-
-                ps.setDate(1, new java.sql.Date(c.getData().getTimeInMillis()));
-                ps.setDate(2, new java.sql.Date(c.getData_retorno().getTimeInMillis()));
-                ps.setString(3, c.getObservacao());
-                ps.setFloat(4, c.getValor());
-                ps.setString(5, c.getMedico().getCpf());
-                ps.setInt(6, c.getPet().getId());
-
-                ResultSet rs = ps.executeQuery();
-
-                if (rs.next()) {
-                    c.setId(rs.getInt("id"));
-                }
-
-            } else {
-
+            if (rs.next()) {
+                c.setId(rs.getInt("id"));
             }
 
         }

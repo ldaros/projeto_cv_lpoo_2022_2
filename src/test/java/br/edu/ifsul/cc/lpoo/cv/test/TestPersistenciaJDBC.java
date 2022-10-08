@@ -17,65 +17,65 @@ import org.junit.Test;
 
 public class TestPersistenciaJDBC {
 
-    // @Test
-    public void testConexaoJPA() throws Exception {
+    @Test
+    public void testConexaoJDBC() throws Exception {
         // criar um objeto do tipo PersistenciaJDBC.
-        PersistenciaJDBC jdbc = new PersistenciaJDBC();
-        if (jdbc.conexaoAberta()) {
-            System.out.println("conectou no BD via jpa ...");
-            jdbc.fecharConexao();
+        PersistenciaJDBC JDBC = new PersistenciaJDBC();
+        if (JDBC.conexaoAberta()) {
+            System.out.println("conectou no BD via JDBC ...");
+            JDBC.fecharConexao();
         } else {
             System.out.println("nao conectou no BD ...");
 
         }
     }
 
-    // @Test
+    @Test
     public void testListProduto() throws Exception {
         // criar um objeto do tipo PersistenciaJPA.
-        PersistenciaJDBC jdbc = new PersistenciaJDBC();
-        if (jdbc.conexaoAberta()) {
-            List<Produto> lista = jdbc.listProdutos();
+        PersistenciaJDBC JDBC = new PersistenciaJDBC();
+        if (JDBC.conexaoAberta()) {
+            List<Produto> lista = JDBC.listProdutos();
             for (Produto p : lista) {
 
                 System.out.println("Produto: " + p);
             }
 
-            jdbc.fecharConexao();
+            JDBC.fecharConexao();
         } else {
             System.out.println("nao conectou no BD ...");
 
         }
     }
 
-    // @Test
+    @Test
     public void testPersitenciaProduto() throws Exception {
         // criar um objeto do tipo PersistenciaJPA.
-        PersistenciaJDBC jpa = new PersistenciaJDBC();
-        if (jpa.conexaoAberta()) {
+        PersistenciaJDBC JDCB = new PersistenciaJDBC();
+        if (JDCB.conexaoAberta()) {
 
-            List<Produto> lista = jpa.listProdutos();
+            List<Produto> lista = JDCB.listProdutos();
             if (lista.isEmpty()) {
 
                 Produto p = new Produto();
                 p.setNome("teste");
-                p.setFornecedor(getFornecedor(jpa));
+                p.setFornecedor(getFornecedor(JDCB));
                 p.setQuantidade(0f);
                 p.setTipo(TipoProduto.ATENDIMENTO_AMBULATORIAL);
                 p.setValor(100f);
-                jpa.persist(p);
+                JDCB.persist(p);
                 System.out.println("Incluiu o produto: " + p.getId());
 
             } else {
 
                 for (Produto p : lista) {
-                    jpa.remover(p);
+                    JDCB.remover(p);
                 }
 
                 System.out.println("Removeu todos os " + lista.size() + " produtos");
             }
 
-            jpa.fecharConexao();
+            JDCB.fecharConexao();
         } else {
             System.out.println("nao conectou no BD ...");
 
@@ -84,9 +84,9 @@ public class TestPersistenciaJDBC {
 
     @Test
     public void testPersistenciaReceita() throws Exception {
-
         // criar um objeto do tipo PersistenciaJPA.
         PersistenciaJDBC jpa = new PersistenciaJDBC();
+
         if (jpa.conexaoAberta()) {
 
             List<Receita> lista = jpa.listReceitas();
